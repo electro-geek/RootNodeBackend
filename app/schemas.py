@@ -30,7 +30,6 @@ class ProblemResponse(ProblemBase):
 
 class SubmissionCreate(BaseModel):
     problem_id: int
-    user_id: int
     language: str
     code_body: str
 
@@ -44,5 +43,12 @@ class SubmissionResponse(BaseModel):
     execution_time: Optional[float] = None
     memory_usage: Optional[float] = None
     error_message: Optional[str] = None
+class UserResponse(BaseModel):
+    id: int
+    username: Optional[str] = None
+    email: str
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    tier: str
     class Config:
         from_attributes = True

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from . import models, schemas, database, tasks
+from . import models, schemas, database, tasks, auth
 from .database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
@@ -21,7 +21,11 @@ def get_problem(slug: str, db: Session = Depends(get_db)):
     return problem
 
 @app.post("/submissions", response_model=schemas.SubmissionResponse)
-def submit_code(submission: schemas.SubmissionCreate, db: Session = Depends(get_db)):
+def submit_code(
+    submission: schemas.SubmissionCreate, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
     # Check if problem exists
     problem = db.query(models.Problem).filter(models.Problem.id == submission.problem_id).first()
     if not problem:
@@ -29,7 +33,7 @@ def submit_code(submission: schemas.SubmissionCreate, db: Session = Depends(get_
     
     # Create submission record
     new_submission = models.Submission(
-        user_id=submission.user_id,
+        user_id=current_user.id,
         problem_id=submission.problem_id,
         language=submission.language,
         code_body=submission.code_body,
@@ -67,3 +71,7 @@ def create_problem(problem: schemas.ProblemCreate, db: Session = Depends(get_db)
 @app.get("/")
 def read_root():
     return {"message": "Welcome to RootNode Backend Engine API"}
+
+@app.get("/me", response_model=schemas.UserResponse)
+def get_me(current_user: models.User = Depends(auth.get_current_user)):
+    return current_user

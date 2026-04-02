@@ -5,9 +5,13 @@ from .database import Base
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    tier = Column(String)  # User/Admin
+    username = Column(String, unique=True, index=True, nullable=True)
+    email = Column(String, unique=True, index=True)
+    display_name = Column(String, nullable=True)
+    photo_url = Column(String, nullable=True)
+    firebase_uid = Column(String, unique=True, index=True)
+    hashed_password = Column(String, nullable=True)
+    tier = Column(String, default="User")  # User/Admin
 
 class Problem(Base):
     __tablename__ = "problems"

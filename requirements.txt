@@ -10,3 +10,4 @@ pydantic-settings
 python-multipart
 jinja2
 python-slugify
+firebase-admin

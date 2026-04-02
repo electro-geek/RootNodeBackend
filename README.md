@@ -72,3 +72,38 @@ The AI should implement a core module `judge.py`. This is the most critical logi
 > 4. Implement a logic that compares the container's output against stored test cases.
 > 5. Use a .env file for database credentials and Docker socket paths."
 
+## 7. Firebase Authentication & Vercel Deployment
+
+This project uses **Firebase Authentication** for Google Sign-in/Sign-up. The backend verifies the Firebase ID Token sent from the frontend.
+
+### Environment Variables (Vercel/Production)
+To deploy on Vercel or any cloud provider, set the following environment variables:
+
+| Variable | Description |
+| :--- | :--- |
+| `FIREBASE_PROJECT_ID` | Your Firebase Project ID |
+| `FIREBASE_CLIENT_EMAIL` | Firebase Service Account Client Email |
+| `FIREBASE_PRIVATE_KEY` | Firebase Service Account Private Key (include `\n`) |
+| `DB_URL` | PostgreSQL Connection URL |
+| `REDIS_URL` | Redis URL (used for Celery broker & backend) |
+
+### How to get Firebase Credentials:
+1. Go to **Firebase Console** $\rightarrow$ Project Settings $\rightarrow$ Service Accounts.
+2. Click **Generate New Private Key**.
+3. Copy `project_id`, `client_email`, and `private_key` from the downloaded JSON.
+4. When setting `FIREBASE_PRIVATE_KEY` in Vercel, ensure it's the full string including `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`.
+
+### Authentication Flow:
+1. Frontend signs in user with Google via Firebase.
+2. Frontend retrieves `idToken`.
+3. Frontend sends `idToken` in `Authorization: Bearer <token>` header to backend.
+4. Backend verifies token, syncs user data in PostgreSQL, and returns user info.
+
+---
+
+## 8. Development Setup
+1. Install dependencies: `pip install -r requirements.txt`
+2. Update `config.properties` or set environment variables.
+3. Run the API: `python run.py`
+4. Run the Celery worker: `celery -A app.celery_app worker --loglevel=info`
+
