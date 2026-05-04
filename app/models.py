@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, Float
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+import uuid
 from .database import Base
 
 class User(Base):
     __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String, unique=True, index=True, nullable=True)
     email = Column(String, unique=True, index=True)
     display_name = Column(String, nullable=True)
@@ -36,7 +38,7 @@ class TestCase(Base):
 class Submission(Base):
     __tablename__ = "submissions"
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
     problem_id = Column(Integer, ForeignKey("problems.id"))
     language = Column(String)
     code_body = Column(Text)

@@ -33,10 +33,12 @@ class SubmissionCreate(BaseModel):
     language: str
     code_body: str
 
+import uuid
+
 class SubmissionResponse(BaseModel):
     id: int
     problem_id: int
-    user_id: int
+    user_id: uuid.UUID
     language: str
     code_body: str
     status: str
@@ -44,7 +46,7 @@ class SubmissionResponse(BaseModel):
     memory_usage: Optional[float] = None
     error_message: Optional[str] = None
 class UserResponse(BaseModel):
-    id: int
+    id: uuid.UUID
     username: Optional[str] = None
     email: str
     display_name: Optional[str] = None

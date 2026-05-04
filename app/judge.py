@@ -4,7 +4,7 @@ import tempfile
 import time
 from .config import settings
 
-client = docker.from_env(version='auto', base_url=settings.docker_host)
+client = docker.DockerClient(base_url=settings.docker_host)
 
 LANG_CONFIGS = {
     "python": {

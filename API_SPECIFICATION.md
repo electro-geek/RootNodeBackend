@@ -18,10 +18,92 @@ RootNode is a secure, scalable, and high-performance **Online Judge System** des
 ---
 
 ## Authentication
-This project uses **Firebase Authentication**. All protected endpoints require a Firebase `idToken` sent in the `Authorization` header.
 
-**Header Format:** 
-`Authorization: Bearer <firebase_id_token>`
+This project uses **Firebase Authentication**. The backend supports **Google Sign-In** (and any other Firebase-supported provider) using a token-based flow. There is **no separate register endpoint** — user accounts are created automatically on first login.
+
+---
+
+### 🔐 Authentication Flow (Google Sign-In)
+
+```
+┌─────────────┐        ┌─────────────────┐        ┌──────────────────┐
+│   Frontend  │        │  Firebase Auth  │        │  RootNode Backend│
+└──────┬──────┘        └────────┬────────┘        └────────┬─────────┘
+       │  1. Sign in with       │                          │
+       │     Google (OAuth)     │                          │
+       │───────────────────────►│                          │
+       │                        │                          │
+       │  2. Firebase ID Token  │                          │
+       │◄───────────────────────│                          │
+       │                        │                          │
+       │  3. API Request with   │                          │
+       │     Bearer <idToken>   │                          │
+       │─────────────────────────────────────────────────►│
+       │                        │                          │
+       │                        │  4. Verify token with   │
+       │                        │     Firebase Admin SDK  │
+       │                        │◄────────────────────────│
+       │                        │                          │
+       │                        │  5. Token valid → uid,  │
+       │                        │     email, name, picture│
+       │                        │─────────────────────────►│
+       │                        │                          │  6. Lookup user by
+       │                        │                          │     firebase_uid in DB
+       │                        │                          │  ┌──────────────────┐
+       │                        │                          │  │ If NOT found:    │
+       │                        │                          │  │ Auto-create user │
+       │                        │                          │  └──────────────────┘
+       │  7. API Response       │                          │
+       │◄─────────────────────────────────────────────────│
+└──────┴──────┘        └────────┴────────┘        └────────┴─────────┘
+```
+
+**Step-by-step:**
+1. **Frontend** initiates Google Sign-In using the Firebase SDK (web/mobile).
+2. Firebase returns a short-lived **ID Token** (`idToken`) after successful OAuth.
+3. **Frontend** sends all authenticated API requests with the token in the `Authorization` header.
+4. **Backend** verifies the token using the Firebase Admin SDK.
+5. Firebase Admin decodes the token and returns the user's `uid`, `email`, `name`, and `picture`.
+6. Backend checks if a user with this `firebase_uid` exists in the database:
+   - ✅ **Existing user** → returns the user record (sign-in).
+   - 🆕 **New user** → automatically creates a new user record (sign-up).
+7. The protected API endpoint proceeds and returns its response.
+
+> **Note:** Firebase ID Tokens expire after **1 hour**. The frontend must refresh the token using `firebase.auth().currentUser.getIdToken(true)` before expiry.
+
+---
+
+### Header Format
+
+All protected endpoints require the Firebase ID Token in the `Authorization` header:
+
+```
+Authorization: Bearer <firebase_id_token>
+```
+
+---
+
+### User Auto-Registration (First Login)
+
+When a new Google user hits any protected endpoint for the first time, the backend automatically creates their account with the following fields populated from the Firebase token:
+
+| Field | Source |
+| :--- | :--- |
+| `firebase_uid` | `uid` from decoded token |
+| `email` | `email` from decoded token |
+| `display_name` | `name` from decoded token (Google display name) |
+| `photo_url` | `picture` from decoded token (Google profile picture URL) |
+| `tier` | Defaults to `"User"` |
+
+---
+
+### Authentication Errors
+
+| HTTP Status | Detail | Cause |
+| :--- | :--- | :--- |
+| `401` | `Missing Authorization Header` | No `Authorization` header sent |
+| `401` | `Invalid Authorization Header. Must start with Bearer` | Header format is wrong |
+| `401` | `Invalid or expired token: ...` | Token is malformed, expired, or revoked |
 
 ---
 
